@@ -4,8 +4,14 @@ import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scalaz.concurrent.Task
-
 import TaskFactory._
+import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.routing.FromConfig
+import com.multiapps.actor.{Driver, RequestSQL, SparkWorker}
+import com.typesafe.config.ConfigFactory
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 object Demo {
   def main(args: Array[String]): Unit = {
@@ -24,6 +30,7 @@ object Demo {
     }
 
     val session = SparkSession.builder()
+      .master("local[*]")
       .appName("multiapps")
       .config("spark.ui.port", "8099")
       .config("spark.scheduler.allocation.file", "resources/scheduler.xml")
@@ -33,15 +40,22 @@ object Demo {
     // Create a temp table and cache the dataset
     df.createOrReplaceTempView(s"$mainTableName")
 
-    //session.sqlContext.cacheTable(s"$mainTableName")
-    val tasks = for (i <- 0 until numTasks) yield {
-      val query = arrayQuery(scala.util.Random.nextInt(length))
-      getTask {
-        val outputDf = session.sql(s"$query")
-        outputDf.collect
-      }
-    }
+    // Create Actor systems
+    val config = ConfigFactory.load()
+    val system = ActorSystem("AkkaSparkSystem", config)
 
-    Task.gatherUnordered(tasks).unsafePerformSync
+    // router is configured in application.conf as a round-robin pool
+    val router1: ActorRef = system.actorOf(
+      FromConfig.props(Props(classOf[SparkWorker], session)), "router1")
+
+    val props = Props(classOf[Driver], router1, numTasks)
+    val driver = system.actorOf(props, "driver")
+
+    for (i <- 1 to numTasks) {
+      driver ! RequestSQL(arrayQuery(scala.util.Random.nextInt(length)))
+    }
+    
+    Await.result(system.whenTerminated, Duration.Inf)
+
   }
 }

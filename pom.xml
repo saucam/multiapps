@@ -16,6 +16,7 @@
     <scala.tools.version>2.11</scala.tools.version>
     <spark.version>2.0.0</spark.version>
     <scalaz.version>7.2.1</scalaz.version>
+    <akka.version>2.4.8</akka.version>
   </properties>
 
   <dependencies>
@@ -59,8 +60,13 @@
       </dependency>
       <dependency>
           <groupId>org.scalaz</groupId>
-          <artifactId>scalaz-core_2.10</artifactId>
+          <artifactId>scalaz-core_${scala.tools.version}</artifactId>
           <version>${scalaz.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>com.typesafe.akka</groupId>
+          <artifactId>akka-actor_${scala.tools.version}</artifactId>
+          <version>${akka.version}</version>
       </dependency>
   </dependencies>
     <build>
