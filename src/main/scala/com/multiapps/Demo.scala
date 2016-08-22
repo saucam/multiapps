@@ -3,8 +3,6 @@ package com.multiapps
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 
-import scalaz.concurrent.Task
-import TaskFactory._
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.routing.FromConfig
 import com.multiapps.actor.{Driver, RequestSQL, SparkWorker}
@@ -30,7 +28,6 @@ object Demo {
     }
 
     val session = SparkSession.builder()
-      .master("local[*]")
       .appName("multiapps")
       .config("spark.ui.port", "8099")
       .config("spark.scheduler.allocation.file", "resources/scheduler.xml")
@@ -54,7 +51,7 @@ object Demo {
     for (i <- 1 to numTasks) {
       driver ! RequestSQL(arrayQuery(scala.util.Random.nextInt(length)))
     }
-    
+
     Await.result(system.whenTerminated, Duration.Inf)
 
   }
