@@ -2,11 +2,14 @@ package com.multiapps
 
 import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
-
 import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.io.IO
 import akka.routing.FromConfig
-import com.multiapps.actor.{Driver, RequestSQL, SparkWorker}
+import akka.util.Timeout
+import com.multiapps.actor.{Driver, RequestSQL, SparkWorker, SprayActor}
 import com.typesafe.config.ConfigFactory
+import spray.can.Http
+import spray.can.server.ServerSettings
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -21,13 +24,14 @@ object Demo {
     val length = arrayQuery.length
 
     var inputDir = "/Users/ydatta/Documents/Workspace/data/new_data/finalest_merge"
-    var numTasks = 2
+    var port = 8089
     if (args.length > 1) {
-      numTasks = args(0).toInt
+      port = args(0).toInt
       inputDir = args(1)
     }
 
     val session = SparkSession.builder()
+        .master("local[*]")
       .appName("multiapps")
       .config("spark.ui.port", "8099")
       .config("spark.scheduler.allocation.file", "resources/scheduler.xml")
@@ -39,20 +43,14 @@ object Demo {
 
     // Create Actor systems
     val config = ConfigFactory.load()
-    val system = ActorSystem("AkkaSparkSystem", config)
+    implicit val system = ActorSystem("SprayAkkaSpark", config)
 
     // router is configured in application.conf as a round-robin pool
     val router1: ActorRef = system.actorOf(
-      FromConfig.props(Props(classOf[SparkWorker], session)), "router1")
+      FromConfig.props(Props(classOf[SprayActor], session)), "router1")
 
-    val props = Props(classOf[Driver], router1, numTasks)
-    val driver = system.actorOf(props, "driver")
-
-    for (i <- 1 to numTasks) {
-      driver ! RequestSQL(arrayQuery(scala.util.Random.nextInt(length)))
-    }
-
-    Await.result(system.whenTerminated, Duration.Inf)
+    // start a new HTTP server on port 8080 with our service actor as the handler
+    IO(Http) ! Http.Bind(router1, interface = "localhost", port = port)
 
   }
 }

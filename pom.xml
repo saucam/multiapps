@@ -17,6 +17,7 @@
     <spark.version>2.0.0</spark.version>
     <scalaz.version>7.2.1</scalaz.version>
     <akka.version>2.4.8</akka.version>
+    <spray.version>1.3.3</spray.version>
   </properties>
 
   <dependencies>
@@ -72,6 +73,21 @@
           <groupId>com.typesafe.akka</groupId>
           <artifactId>akka-actor_${scala.tools.version}</artifactId>
           <version>${akka.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>io.spray</groupId>
+          <artifactId>spray-can_${scala.tools.version}</artifactId>
+          <version>${spray.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>io.spray</groupId>
+          <artifactId>spray-routing_${scala.tools.version}</artifactId>
+          <version>${spray.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>io.spray</groupId>
+          <artifactId>spray-http_${scala.tools.version}</artifactId>
+          <version>${spray.version}</version>
       </dependency>
   </dependencies>
     <build>
