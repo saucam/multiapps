@@ -31,9 +31,10 @@ object Demo {
     }
 
     val session = SparkSession.builder()
-        .master("local[*]")
       .appName("multiapps")
       .config("spark.ui.port", "8099")
+      .config("spark.dynamicAllocation.enabled", "true")
+      .config("spark.shuffle.service.enabled", "true")
       .config("spark.scheduler.allocation.file", "resources/scheduler.xml")
       .getOrCreate()
 
