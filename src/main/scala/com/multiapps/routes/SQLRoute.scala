@@ -8,11 +8,13 @@ import spray.routing._
   */
 trait SQLRoute extends BaseRoute with DemoService {
   def sqlRoutes(): Route = {
-    sqlRoute
+    sqlRoute ~ multsqlRoute
   }
 
   // Just one route
   val routes = sqlRoutes
 
   def sqlRoute: Route = pathPrefix("api" / "sql") {post { serve {  implicit sql: String => mainService } }}
+  def multsqlRoute: Route = pathPrefix("api" / "multsql") {post { serve {  implicit sql: String => multMainService } }}
+
 }

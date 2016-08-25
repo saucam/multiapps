@@ -23,4 +23,16 @@ trait DemoService  {
     }
   }
 
+  def multMainService(implicit sql: String): Future[String] = {
+    Future {
+      val buf = new ArrayBuffer[String]
+      // Loop in vain
+      for (i <- 1 to 20) {
+        session.sql(sql).collect
+      }
+      val result = session.sql(sql).collect.foreach(x => buf += x.toString)
+      buf.toString
+    }
+  }
+
 }
